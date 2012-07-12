@@ -7,9 +7,14 @@ INCLUDE (CheckCXXCompilerFlag)
 INCLUDE (CheckFunctionExists)
 INCLUDE (CheckIncludeFile)
 INCLUDE (FindPkgConfig)
+INCLUDE (FindGit)
+
+INCLUDE (GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+message( "Building piglit from Git Repository:\n\t Git Refspec: ${GIT_REFSPEC} \n\t Git Revision: ${GIT_SHA1}" )
 
 project (piglit)
-
+set(CMAKE_INSTALL_PREFIX "/opt/piglit")
 find_package(OpenGL REQUIRED)
 find_package(TIFF)
 find_package(GLUT REQUIRED)
@@ -210,10 +215,86 @@ configure_file(
 	"${piglit_BINARY_DIR}/tests/util/config.h"
 )
 
+
+
 include(cmake/piglit_util.cmake)
 include(cmake/piglit_glapi.cmake)
 include(cmake/piglit_dispatch.cmake)
 
+IF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
+
+   SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Piglit OpenGL Test Suite")
+   # Set these two variable If you Aare the Package Maintainer.
+   #SET(CPACK_PACKAGE_CONTACT "")
+   #SET(CPACK_PACKAGE_VENDOR "Piglit")
+   SET(CPACK_PACKAGE_VERSION_MAJOR "0")
+   SET(CPACK_PACKAGE_VERSION_MINOR "1")
+   SET(CPACK_INCLUDE_TOPLEVEL_DIRECTORY 1)
+   SET(CPACK_PACKAGE_VERSION_PATCH "GIT-${GIT_SHA1}")
+   SET(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/COPYING")
+   SET(CPACK_RESOURCE_FILE_README "${PROJECT_SOURCE_DIR}/README")
+   SET(CPACK_RESOURCE_FILE_WELCOME "${PROJECT_SOURCE_DIR}/HACKING")
+   SET(CPACK_SET_DESTDIR "cmake-packing")
+   Set(CPACK_PACKAGING_INSTALL_PREFIX /opt/piglit-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR})
+   SET(CPACK_PACKAGE_INSTALL_DIRECTORY "piglit-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}")
+   SET(CPACK_SOURCE_PACKAGE_FILE_NAME "packages/piglit-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+   SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.3.1-6), libgcc1 (>= 1:3.4.2-12), freeglut3 >= 2.6.0, python-numpy, python-mako >= 0.5.0, libpng12-0 >=1.2.46")
+   SET(CPACK_SOURCE_IGNORE_FILES "/^CPack.*/" "/.*\\\\.kdev.*/" "_CPack_Packages*" "/^CMakeCache.txt"
+   	 "/^cmake_install.cmake" "/^.git/" "/^CMakeFiles/" "/^CMakeCache.txt" "${CPACK_SOURCE_PACKAGE_FILE_NAME}.*" "/^target_api" 
+   	 "/^generated_tests/spec/")
+   IF(UNIX)
+		SET(CPACK_GENERATOR "TGZ;TBZ2")
+   ELSE(WIN32)
+		SET(CPACK_GENERATOR "ZIP")
+   ELSE(APPLE)
+   	# todo.
+		SET(CPACK_GENERATOR "TGZ")		
+   ENDIF(UNIX)
+   INCLUDE(CPack)
+   # List executables
+   message("CPack Package Support Enabled")
+ENDIF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
+
+
 include_directories(src)
 add_subdirectory(cmake/target_api)
 add_subdirectory(generated_tests)
+
+# Here is where The Installer Magic happens.
+
+# Install All Executable Files.
+INSTALL(DIRECTORY ${PROJECT_BINARY_DIR}/bin ${PROJECT_BINARY_DIR}/lib DESTINATION "." USE_SOURCE_PERMISSIONS)
+# piglit framework.
+INSTALL(DIRECTORY ${PROJECT_SOURCE_DIR}/framework DESTINATION "." USE_SOURCE_PERMISSIONS
+	FILES_MATCHING PATTERN "*.py"
+	)
+file(GLOB Piglet_Runtime_Files ${PROJECT_SOURCE_DIR}/*.py)
+INSTALL(FILES ${Piglet_Runtime_Files} DESTINATION "."
+	PERMISSIONS
+		OWNER_READ OWNER_EXECUTE OWNER_WRITE
+		GROUP_READ GROUP_EXECUTE
+		WORLD_READ WORLD_EXECUTE
+	
+	)
+# Piglit Executable scripts
+INSTALL(DIRECTORY tests DESTINATION "." USE_SOURCE_PERMISSIONS
+	FILES_MATCHING PATTERN "*.tests"
+		PATTERN "*.frag" PATTERN "*.vert" PATTERN "*.shader_test"
+    	PATTERN "*.rgb"
+	)	
+# Piglit test scripts
+
+# Test Data.
+install(DIRECTORY "generated_tests"  DESTINATION "."
+        	FILES_MATCHING PATTERN "*.frag"
+        	PATTERN "*.vert"
+        	PATTERN "*.shader_test")        	
+#Various required Documentation:
+INSTALL(FILES
+	 "${PROJECT_SOURCE_DIR}/COPYING" "${PROJECT_SOURCE_DIR}/HACKING" "${PROJECT_SOURCE_DIR}/RELEASE" "${PROJECT_SOURCE_DIR}/README" DESTINATION ".")
+
+INSTALL(DIRECTORY "templates" DESTINATION ".")
+INSTALL(DIRECTORY "examples" DESTINATION ".")
+INSTALL(DIRECTORY "documentation" DESTINATION ".")
+INSTALL(DIRECTORY "licences" DESTINATION ".")
+

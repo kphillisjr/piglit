@@ -9,3 +9,11 @@ cmake_install.cmake
 CMakeCache.txt
 target_api
 tests/glslparsertest/glslcompiler
+_CPack_Packages
+CPackConfig.cmake
+CPackSourceConfig.cmake
+install_manifest.txt
+piglit-*.tar.gz
+piglit-*.tar.bz2
+piglit-*.tar.Z
+

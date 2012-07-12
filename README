@@ -31,6 +31,7 @@ First of all, you need to make sure that the following are installed:
   - Python 2.6 or greater
   - numpy (http://www.numpy.org)
   - cmake (http://www.cmake.org)
+  - pkg-config
   - GL, glu and glut libraries and development packages (i.e. headers)
   - X11 libraries and development packages (i.e. headers)
   - libpng, libtiff and related development packages (i.e. headers)
@@ -119,6 +120,7 @@ Install development packages.
   - python-numpy
   - libglut-devel
   - libGLU-devel
+  - pkgconfig
 
 Configure and build.
   $ cmake .
