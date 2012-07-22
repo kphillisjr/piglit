@@ -7,6 +7,11 @@ INCLUDE (CheckCXXCompilerFlag)
 INCLUDE (CheckFunctionExists)
 INCLUDE (CheckIncludeFile)
 INCLUDE (FindPkgConfig)
+include (cmake/PiglitInstaller.cmake)
+INCLUDE (GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+message( "Building piglit from Git Repository:\n\t Git Refspec: ${GIT_REFSPEC} \n\t Git Revision: ${GIT_SHA1}" )
+
 
 project (piglit)
 
@@ -210,6 +215,9 @@ configure_file(
 	"${piglit_BINARY_DIR}/tests/util/config.h"
 )
 
+
+Configure_PIGLIT_CPACK()
+
 include(cmake/piglit_util.cmake)
 include(cmake/piglit_glapi.cmake)
 include(cmake/piglit_dispatch.cmake)
@@ -217,3 +225,5 @@ include(cmake/piglit_dispatch.cmake)
 include_directories(src)
 add_subdirectory(cmake/target_api)
 add_subdirectory(generated_tests)
+
+PIGLIT_INSTALL_FILES()

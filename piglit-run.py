@@ -31,6 +31,7 @@ import traceback
 import json
 
 sys.path.append(path.dirname(path.realpath(sys.argv[0])))
+import framework
 import framework.core as core
 from framework.threads import synchronized_self
 
