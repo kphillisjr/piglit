@@ -178,6 +178,9 @@ main(int argc, char **argv)
          fprintf(stderr, "%s bad option: %s\n", TestName, argv[i]);
    }
 
+	/* Register Signal handler that is used to capture crashes */
+	piglit_register_signal_handler();
+	
    dpy = XOpenDisplay(NULL);
    if (dpy == NULL) {
       fprintf(stderr, "%s: open display failed\n", TestName);

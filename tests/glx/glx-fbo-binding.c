@@ -95,6 +95,9 @@ main(int argc, char **argv)
       }
    }
 
+   /* Register Signal handler that is used to capture crashes */
+   piglit_register_signal_handler();
+	
    dpy = XOpenDisplay(NULL);
    if (!dpy) {
       fprintf(stderr, "Failed to open display\n");

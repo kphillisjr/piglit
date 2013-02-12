@@ -83,6 +83,9 @@ main(int argc, char **argv)
 			fprintf(stderr, "Unknown option: %s\n", argv[i]);
 	}
 
+	/* Register Signal handler that is used to capture crashes */
+	piglit_register_signal_handler();
+	
 	dpy = XOpenDisplay(NULL);
 	if (dpy == NULL) {
 		fprintf(stderr, "couldn't open display\n");

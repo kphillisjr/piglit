@@ -194,6 +194,9 @@ int main(int argc, char **argv) {
 	GLXContext ctx;
 	void (*test_func)(Display*, GLXDrawable);
 
+	/* Register Signal handler that is used to capture crashes */
+	piglit_register_signal_handler();
+	
 	parse_args(argc, argv, &test_func);
 
 	display = piglit_get_glx_display();

@@ -106,6 +106,9 @@ main(int argc, char **argv)
 	const char *unified_string;
 	char *buf;
 
+	/* Register Signal handler that is used to capture crashes */
+	piglit_register_signal_handler();
+	
 	Display *dpy = XOpenDisplay(NULL);
 	if (dpy == NULL) {
 		fprintf(stderr, "couldn't open display\n");

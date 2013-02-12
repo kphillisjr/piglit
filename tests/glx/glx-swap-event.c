@@ -512,7 +512,10 @@ main(int argc, char *argv[])
        usage();
        piglit_report_result(PIGLIT_SKIP);
     }
-    
+
+   	/* Register Signal handler that is used to capture crashes */
+	piglit_register_signal_handler();
+
     dpy = XOpenDisplay(dpyName);
     if (!dpy) {
         printf("Error: couldn't open display %s\n",
