@@ -83,6 +83,10 @@ parse_version_string(const char *string, int *major, int *minor)
 void
 GLX_ARB_create_context_setup(void)
 {
+
+	/* Register Signal handler that is used to capture crashes */
+	piglit_register_signal_handler();
+
 	dpy = piglit_get_glx_display();
 
 	piglit_require_glx_version(dpy, 1, 4);

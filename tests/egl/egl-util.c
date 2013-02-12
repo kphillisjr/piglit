@@ -196,6 +196,9 @@ egl_util_run(const struct egl_test *test, int argc, char *argv[])
 			fprintf(stderr, "Unknown option: %s\n", argv[i]);
 	}
 
+	/* Register Signal handler that is used to capture crashes */
+	piglit_register_signal_handler();
+
 	state.dpy = XOpenDisplay(NULL);
 	if (state.dpy == NULL) {
 		fprintf(stderr, "couldn't open display\n");

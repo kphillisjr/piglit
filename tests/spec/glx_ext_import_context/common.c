@@ -81,6 +81,9 @@ void GLX_EXT_import_context_setup(void)
 
 	const char *vendor;
 
+	/* Register Signal handler that is used to capture crashes */
+	piglit_register_signal_handler();
+	
 	dpy = piglit_get_glx_display();
 
 	/* NVIDIA incorrectly only list the extension in the client

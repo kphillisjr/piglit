@@ -100,6 +100,9 @@ EGL_KHR_create_context_setup(EGLint renderable_type_mask)
 	EGLint count;
 	EGLint major, minor;
 
+	/* Register Signal handler that is used to capture crashes */
+	piglit_register_signal_handler();
+
 	dpy = XOpenDisplay(NULL);
 	if (dpy == NULL) {
 		fprintf(stderr, "couldn't open display\n");

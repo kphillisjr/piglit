@@ -135,6 +135,9 @@ int piglit_cl_framework_run(int argc, char** argv)
 	cl_platform_id platform_id = NULL;
 	cl_device_id device_id = NULL;
 
+	/* Register Signal handler that is used to capture crashes */
+	piglit_register_signal_handler();
+
 	/* Get test configuration */
 	struct piglit_cl_test_config_header *config =
 		piglit_cl_get_test_config(argc,
