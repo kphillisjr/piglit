@@ -7,6 +7,7 @@ set(UTIL_INCLUDES
 
 set(UTIL_SOURCES
 	piglit-util.c
+	piglit-util-sighandler.c
 	)
 
 set(UTIL_GL_INCLUDES

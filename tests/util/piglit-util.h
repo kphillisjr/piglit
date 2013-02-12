@@ -111,6 +111,18 @@ enum piglit_result {
 #define MAX2(a, b) ((a) > (b) ? (a) : (b))
 
 /**
+ * Register platform specific signal handler.
+ 
+ * This Signal handler is used to automatically generate call stacks
+ * when a test crashes.
+ *
+ * \precondition \c Some call stacks will not completely register.
+ *    For example, SIGABRT on linux is already after test terminates.
+ * 
+ */
+bool piglit_register_signal_handler();
+
+/**
  * Determine if an extension is listed in an extension string
  *
  * \param haystack   List of all extensions to be searched
