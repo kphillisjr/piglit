@@ -1,132 +1,50 @@
-
-#if defined(_WIN32)
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <eh.h>
-#endif
-
-#include <assert.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-
-#include "config.h"
-
-#if defined(HAVE_SYS_TYPES_H) && defined(HAVE_SYS_STAT_H) && \
-	defined(HAVE_UNISTD_H) && defined( HAVE_FCNTL_H)
-# include <sys/types.h>
-# include <sys/stat.h>
-# include <fcntl.h>
-# include <unistd.h>
-#else
-# define USE_STDIO
-#endif
-
-#ifdef HAVE_SIGNAL_H
-#include <signal.h>
-#ifdef HAVE_EXECINFO_H
-#include <execinfo.h>
-#endif
-#ifdef HAVE_SYSCALL_H
-#include <syscall.h>
-#else
-#ifdef HAVE_SYS_SYSCALL_H
-#include <sys/syscall.h>
-#endif
-#endif
-
-#ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#else
-#ifdef HAVE_WAIT_H
-#include <wait.h>
-#endif
-#endif
-
-#endif
-
 #include "piglit-util.h"
 
+#if !defined(_WIN32)
 
-#if defined(_WIN32)
-void piglit_signal_handler_func( unsigned int u, EXCEPTION_POINTERS* pExp )
-{
-   	 unsigned int   i;
-     void         * stack[ 100 ];
-     unsigned short frames;
-     SYMBOL_INFO  * symbol;
-     HANDLE         process;
-	
-     process = GetCurrentProcess();
-	 fprintf(pExp->ExceptionCode)
-     SymInitialize( process, NULL, TRUE );
-
-     frames               = CaptureStackBackTrace( 0, 100, stack, NULL );
-     symbol               = ( SYMBOL_INFO * )calloc( sizeof( SYMBOL_INFO ) + 256 * sizeof( char ), 1 );
-     symbol->MaxNameLen   = 255;
-     symbol->SizeOfStruct = sizeof( SYMBOL_INFO );
-
-     for( i = 0; i < frames; i++ )
-     {
-         SymFromAddr( process, ( DWORD64 )( stack[ i ] ), 0, symbol );
-
-         printf( "%i: %s - 0x%0X\n", frames - i - 1, symbol->Name, symbol->Address );
-     }
-
-    free( symbol );
-    // TODO: Integrate other exceptions that can be of use.
-	//	http://msdn.microsoft.com/en-us/library/windows/desktop/aa363082%28v=vs.85%29.aspx
-	if( (pExp->ExceptionCode == EXCEPTION_FLT_DIVIDE_BY_ZERO ) &&
-		(pExp->ExceptionCode == EXCEPTION_FLT_DIVIDE_BY_ZERO ) &&
-		(pExp->ExceptionCode == EXCEPTION_INT_DIVIDE_BY_ZERO ) )
-	{
-
-		// Some other exception occured.
-		fprintf(stdout,"PIGLIT: {'result': 'crash' }\n", result_str);
-		fflush(stdout);
-		ExitProcess(-1);
-	}
-	ExitProcess(0);
-}
-
-bool piglit_register_signal_handler()
-{
-	// use _set_se_translator to handle exception translater.
-	//	http://msdn.microsoft.com/en-us/library/5z4bw5h5%28VS.80%29.aspx
-	_set_se_translator(my_trans_func);
-	return true;
-}
-
-#else
-#ifdef HAVE_SIGNAL_H
+#if defined( HAVE_SIGNAL_H )  && defined (HAVE_EXECINFO_H)
 #include <signal.h>
-#ifdef HAVE_SETJUMP_H
-#include <setjmp.h>
-jmp_buf  piglit_trapbuf;
+#include <execinfo.h>
+
+#if defined(HAVE_UNISTD_H)
+# include <unistd.h>
+#endif
+
+#ifdef HAVE_SYS_SYSCALL_H
+#include <sys/syscall.h>
+#elif defined(HAVE_SYSCALL_H)
+#include <syscall.h>
+#endif
+
+#if defined(HAVE_SYS_WAIT_H)
+#include <sys/wait.h>
+#elif defined( HAVE_WAIT_H )
+#include <wait.h>
+#endif
+#ifdef HAVE_UCONTEXT_H
+#include <ucontext.h>
 #endif
 // Simple signal handler that makes use of gdb.
 bool piglit_sighandler_gdb_report( char*name_buf,  char* pid_buf)
 {
-#if defined(HAVE_SYS_SYSCALL_H) || defined(HAVE_SYSCALL_H)
-    int child_pid = syscall(SYS_fork);
-#else
-    int child_pid = fork();
-#endif
-    int status;
-    if (!child_pid) {
-        char path[1024];
-        char gdb_command[1024];
-        FILE *fp;
-        dup2(2,1); // redirect output to stderr
-	    sprintf(gdb_command, "gdb --batch -n -ex thread -ex bt %s -p %s",
-	    	name_buf, pid_buf);
-	    fp = popen(gdb_command,"r");
+	#if defined(HAVE_SYS_SYSCALL_H) || defined(HAVE_SYSCALL_H)
+	int child_pid = syscall(SYS_fork);
+	#else
+	int child_pid = fork();
+	#endif
+	int status;
+	if (!child_pid) {
+		char path[1024];
+		char gdb_command[1024];
+		FILE *fp;
+		dup2(2,1); // redirect output to stderr
+		sprintf(gdb_command, "gdb --batch -n -ex thread -ex bt %s -p %s",
+		name_buf, pid_buf);
+		fp = popen(gdb_command,"r");
 		if (fp == NULL) {
-    		// gdb is not installed.
-    		// Generate stack trace from
-    		exit(1);
+			// gdb is not installed.
+			// Generate stack trace from
+			exit(1);
 		}
 		/* Read the output a line at a time - output it. */
 		while (fgets(path, sizeof(path)-1, fp) != NULL) {
@@ -140,112 +58,149 @@ bool piglit_sighandler_gdb_report( char*name_buf,  char* pid_buf)
 				" method.\n");
 			exit(1);
 		}
-        exit(0); /* If gdb failed to start */
-    } else {
+		exit(0); /* If gdb failed to start */
+	} else {
 #if defined(HAVE_SYS_WAIT_H) || defined( HAVE_WAIT_H )
-        waitpid(child_pid,&status,0);
-        if(status != 0) {
-        	return false;
-        }
+		waitpid(child_pid,&status,0);
+		if(status != 0) {
+			return false;
+		}
 #endif
-    }
-    return true;
+	}
+	return true;
+}
+#ifdef HAVE_UCONTEXT_H
+bool piglit_print_context_registers(ucontext_t *uc)
+{
+	
+#if defined(__linux__)
+	mcontext_t *ctx = &uc->uc_mcontext;
+#if defined(__i386__)
+	fprintf(stderr, "TRAPNO: %08x ERR: %08x",
+        ctx->gregs[12], ctx->gregs[13]);
+	fprintf(stderr, "EAX:%08x EBX:%08lx ECX:%08lx EDX:%08lx",
+        ctx->gregs[11], ctx->gregs[8], ctx->gregs[10],ctx->gregs[9] );
+	fprintf(stderr, "EDI:%08lx ESI:%08lx EBP:%08lx ESP:%08lx",
+        ctx->gregs[4], ctx->gregs[5], ctx->gregs[6], ctx->gregs[7] );
+	fprintf(stderr, "SS :%08lx EFL:%08lx EIP:%08lx CS:%08lx",
+        ctx->gregs[18], ctx->gregs[17], ctx->gregs[14], ctx->gregs[15] );
+	fprintf(stderr, "DS :%08lx ES :%08lx FS :%08lx GS:%08lx",
+        ctx->gregs[3], ctx->gregs[2], ctx->gregs[1], ctx->gregs[0] );
+
+#elif defined(__x86_64__)
+	/* Linux amd64 compatible Register dump */
+	fprintf(stderr,"ERR: %016lx TRAPNO: %016lx\nRIP: %016lx EFLAGS: %016lx",
+		ctx->gregs[19], ctx->gregs[20], ctx->gregs[16], ctx->gregs[17] );		
+	fprintf(stderr,"RAX: %016lx RBX: %016lx\nRCX: %016lx RDX %016lx",
+		ctx->gregs[13], ctx->gregs[11], ctx->gregs[15], ctx->gregs[12]);
+	fprintf(stderr,"RSI: %016lx RDI: %016lx\nRBP: %016lx RSP %016lx",
+		ctx->gregs[9], ctx->gregs[8], ctx->gregs[15], ctx->gregs[15]);
+	fprintf(stderr,"CR2: %016lx", ctx->gregs[22]);
+	fprintf(stderr,"CSGSFS: %016lx OLDMASK: %016lx",
+		ctx->gregs[18], ctx->gregs[21]);		
+	fprintf(stderr,"R08: %016lx R09: %016lx\nR10: %016lx R11: %016lx",
+		ctx->gregs[0], ctx->gregs[1], ctx->gregs[2], ctx->gregs[3]);		
+	fprintf(stderr,"R12: %016lx R13: %016lx\nR14: %016lx R15: %016lx",
+		ctx->gregs[4], ctx->gregs[5],
+		ctx->gregs[6], ctx->gregs[8]);				
+#else 
+	/* TODO: Implement Other Linux Platforms, for example, Arm and PowerPC. */
+	return false;
+#endif
+
+#else
+	/* TODO: Implement Other platforms. FreeBSD, OSX, etc */
+	return false;
+#endif
+
+	return true;
 }
 
-// Generate Old Fashioned segmentation reports.
-#define sigsegv_outp(x, ...)    fprintf(stderr, x "\n", ##__VA_ARGS__)
+void piglit_print_registers()
+{
+	ucontext_t uc;
+	
+	if(getcontext(&uc) == 0)
+	{
+		fprintf(stderr,"[Backtrace] Register Dump:");
+		if(!piglit_print_context_registers(&uc)) {
+			fprintf(stderr,"Warning: Unable to get context information"
+				" on registers.");
+		}
+	} else {
+		fprintf(stderr,"Warning: Unable to get context information on"
+			" registers. ( Unable to Get Context)");
+	}
+}
 
-#if __WORDSIZE == 64
-# define SIGSEGV_STACK_IA64
-# define REGFORMAT "%016lx"
-#elif __WORDSIZE == 32
-# define SIGSEGV_STACK_X86
-# define REGFORMAT "%08x"
 #else
-# define SIGSEGV_STACK_GENERIC
-# define REGFORMAT "%x"
+
+void piglit_print_registers()
+{
+	fprintf(stderr,"Warning: Unable to get context information on registers.");
+}
 #endif
 
-void piglit_print_backtrace(int sig, siginfo_t *info, void *secret)
+void piglit_print_backtrace()
 {
-#ifdef HAVE_EXECINFO_H
-	// Failed to get a gdb debug output. Instead use 
+
+#define MAX_TRACE_SIZE 32
 	// failed to get gdb report... use other method.
-	void *trace[16];
+	void *trace[MAX_TRACE_SIZE];
 	char **messages = (char **)NULL;
 	int i, trace_size = 0;
-	ucontext_t *uc = (ucontext_t *)secret;
 	trace_size = backtrace(trace, 16);
-	/* overwrite sigaction with caller's address */
-	//trace[1] = (void *) uc->uc_mcontext.gregs[REG_EIP];
-
 	messages = backtrace_symbols(trace, trace_size);
 	/* skip first stack frame (points here) */
-	printf("[backtrace] Execution path\n");
-	for (i=0; i<trace_size; ++i) {
-		fprintf(stderr,"%d - %s\n",i, messages[i]);
-	}
-	printf("[backtrace] Register Dump:\n");
-	for(i = 0; i < NGREG; i++) {
-		sigsegv_outp("reg[%02d] = 0x" REGFORMAT, \
-			i, uc->uc_mcontext.gregs[i]);
-	}
+	fprintf(stderr,"[Backtrace] Execution path");
+	for (i=0; i<trace_size; ++i)
+		fprintf(stderr,"%d - %p - %s",i,&trace[i], messages[i]);
+
+}
+
+#ifdef SA_SIGINFO
+void piglit_sighandler(int sig, siginfo_t *info,
+				   void *secret) {
+	// TODO: Improve GDB handling.
+	//if(piglit_sighandler_gdb_report())
+	//	exit(sig);				   
+	fprintf(stderr,"Caught Signal: %d (%s)", sig, sys_siglist[sig]);				   
+	/* Do something useful with siginfo_t */
+	// sys_siglist is found on BSD 4.2 and up.
+	fprintf(stderr,"info.si_addr  = %p", info->si_addr);
+	fprintf(stderr,"info.si_code  = %d", info->si_code);
+	fprintf(stderr,"info.si_errno = %d", info->si_errno);
+	piglit_print_context_registers((ucontext_t*)secret);
+	piglit_print_registers();	
+	piglit_print_backtrace();
+	// Done with our signal handler... Return default handler.
+	signal(sig, SIG_DFL);
+	kill(getpid(), sig);
+}
 #else
-	fprintf(stdout,"Piglit: Warning, Unable to generate Backtraces.\n");
+void piglit_sighandler(int sig) {
+	sigsegv_outp("Caught Signal: %d (%s)", sig, sys_siglist[sig]);
+	piglit_print_registers();	
+	piglit_print_backtrace();
+	// Done with our signal handler... Return default handler.        
+	signal(sig, SIG_DFL);
+	kill(getpid(), sig);
+
+}
 #endif
-}
-
-volatile sig_atomic_t fatal_error_in_progress = 0;
-void piglit_sighandler(int sig, siginfo_t *info, void *secret) {
-    char proc_pid_buf[30];
-	char proc_name_buf[512];
-	// Get executable name.
-	proc_name_buf[readlink("/proc/self/exe", proc_name_buf, 511)]='\0';
-    sprintf(proc_pid_buf, "%d", getpid());
-	fprintf(stdout,"\nPiglit: Crash Detected on %s ( PID: %s ).\n"
-		"\tGenerating Debug information\n", proc_name_buf, proc_pid_buf);
-	sigsegv_outp("info.si_signo = %d", sig);
-    sigsegv_outp("info.si_code  = %d", info->si_code);
-    sigsegv_outp("info.si_addr  = %p", info->si_addr);
-    sigsegv_outp("info.si_errno = %d", info->si_errno);
-    if(sig == SIGABRT) {
-    	/* For some reason It's not possible to use GDB to debug */
-    	/* Crashes signaled by SIGABRT. So always generate the */
-    	/* Stack trace using the alternative method. */
-	    fprintf(stdout, "Piglit: Crash signal was 6 ( SIGABRT ), Using "\
-	    	"backup method\n");
-    	piglit_print_backtrace(sig, info, secret);
-    } else {
-		if(!piglit_sighandler_gdb_report(proc_name_buf,proc_pid_buf)) {
-			fprintf(stdout,"Piglit: Warning gdb not installed... Using"
-				"backup method to create Backtraces.\n");
-			/* Failed to auto-run gdb... Use backup method to generate */
-			/* The callback trace trace */
-			piglit_print_backtrace(sig, info, secret);
-		}
-	}
-	fprintf(stdout,"PIGLIT: {'result': 'crash' }\n");
-	fflush(stdout);
-
-  /* Maintain the Signal, and use that as the return code. */
-  exit(sig);
-}
 
 bool piglit_register_signal_handler()
-{
+	{
 	/* Register the Piglit signal action handler. */
 	struct sigaction sa;
 	sigset_t block_mask;
-#ifdef HAVE_SETJUMP_H	
-	setjmp (piglit_trapbuf );
-#endif
 	sigemptyset (&block_mask);
 	/* Most signals are already set to need a block. However, this is the */
 	/* only signal that you absolutely haft to block to be able to capture */
 	/* output */
 	sigaddset (&block_mask, SIGABRT);
-    sigaddset (&block_mask, SIGINT);
-    sigaddset (&block_mask, SIGQUIT);
+	sigaddset (&block_mask, SIGINT);
+	sigaddset (&block_mask, SIGQUIT);
 	sa.sa_handler = (void *)piglit_sighandler;
 	sa.sa_mask = block_mask;
 	sa.sa_flags = 0;
@@ -274,5 +229,7 @@ bool piglit_register_signal_handler()
 	return false;
 }
 #endif
+
+// Win32
 #endif
 
