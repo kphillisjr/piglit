@@ -163,6 +163,11 @@ if (NOT MSVC)
 else ()
 	include_directories("include/msvc/c99")
 
+	if(MSVC_VERSION GREATER 1400)
+		# Visual Studio 2005 and up Should include a current enough version
+		# to dbghelp
+		set(HAS_DBGHELP ON)
+	endif()	
 	# -Wall or (/Wall) is actually supported by MSVC and would be detected
 	# by CHECK_C_COMPILER_FLAG above, but is very pedantic, causing
 	# thousand of warnings when including windows.h.
@@ -266,6 +271,7 @@ check_include_file(sys/syscall.h HAVE_SYS_SYSCALL_H)
 check_include_file(syscall.h   HAVE_SYSCALL_H)
 check_include_file(sys/wait.h  HAVE_SYS_WAIT_H)
 check_include_file(unistd.h    HAVE_UNISTD_H)
+check_include_file(ucontext.h HAVE_UCONTEXT_H)
 check_include_file(wait.h	   HAVE_WAIT_H)
 
 configure_file(

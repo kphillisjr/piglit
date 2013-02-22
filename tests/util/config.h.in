@@ -17,3 +17,4 @@
 #cmakedefine HAVE_SYSCALL_H
 #cmakedefine HAVE_SYS_WAIT_H
 #cmakedefine HAVE_WAIT_H
+#cmakedefine HAVE_UCONTEXT_H

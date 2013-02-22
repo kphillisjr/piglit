@@ -8,6 +8,7 @@ set(UTIL_INCLUDES
 set(UTIL_SOURCES
 	piglit-util.c
 	piglit-util-sighandler.c
+	piglit-util-win32.c
 	)
 
 set(UTIL_GL_INCLUDES
@@ -57,6 +58,13 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 		${X11_X11_LIB}
 	)
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+if(HAS_DBGHELP AND ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+	set(UTIL_GL_LIBS
+		${UTIL_GL_LIBS}
+		dbghelp
+	)
+endif()
 
 if(OPENGL_egl_LIBRARY)
 	set(UTIL_GL_SOURCES
