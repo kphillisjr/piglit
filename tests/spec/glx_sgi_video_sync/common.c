@@ -36,19 +36,19 @@
 
 PFNGLXGETVIDEOSYNCSGIPROC __piglit_glXGetVideoSyncSGI;
 PFNGLXWAITVIDEOSYNCSGIPROC __piglit_glXWaitVideoSyncSGI;
-PFNGLXSWAPINTERVALEXTPROC __piglit_glXSwapIntervalEXT;
+
 Window win;
 XVisualInfo *visinfo;
 GLXContext directCtx;
 GLXContext indirectCtx;
 GLXDrawable drawable;
-bool bEXT_swap_control_Supported;
 unsigned int nRefreshRate;
+
 void
 piglit_sgi_video_sync_test_run(enum piglit_result (*draw)(Display *dpy))
 {
 	Display *dpy;
-	const int proc_count = 3;
+	const int proc_count = 2;
 	__GLXextFuncPtr *procs[proc_count];
 	const char *names[proc_count];
 	int i;
@@ -63,19 +63,18 @@ piglit_sgi_video_sync_test_run(enum piglit_result (*draw)(Display *dpy))
 	i = 0;
 	ADD_FUNC(glXGetVideoSyncSGI);
 	ADD_FUNC(glXWaitVideoSyncSGI);
-	ADD_FUNC(glXSwapIntervalEXT);
 
 	dpy = XOpenDisplay(NULL);
 	if (dpy == NULL) {
 		fprintf(stderr, "couldn't open display\n");
 		piglit_report_result(PIGLIT_FAIL);
 	}
-	bEXT_swap_control_Supported = 
-		piglit_is_glx_extension_supported(dpy, "GLX_EXT_swap_control");
+	
 	piglit_require_glx_extension(dpy, "GLX_SGI_video_sync");
 	piglit_glx_get_all_proc_addresses(procs, names, ARRAY_SIZE(procs));
 	visinfo = piglit_get_glx_visual(dpy);
 	win = piglit_get_glx_window(dpy, visinfo);
+	
 	directCtx = glXCreateContext(dpy, visinfo, NULL, True);
 	if (directCtx == NULL) {
 		fprintf(stderr,
@@ -101,14 +100,10 @@ piglit_sgi_video_sync_test_run(enum piglit_result (*draw)(Display *dpy))
 
 	XMapWindow(dpy, win);
 
+	drawable = glXGetCurrentDrawable();
+	nRefreshRate = piglit_get_glx_refreshrate(dpy);
 	piglit_glx_event_loop(dpy, draw);
 	
-	drawable = glXGetCurrentDrawable();
-	if(bEXT_swap_control_Supported){
-		// Swap Interval is the current refresh rate.
-		glXQueryDrawable(dpy, drawable, GLX_SWAP_INTERVAL_EXT, &nRefreshRate);
-		printf("GLX_EXT_swap_control supported: %d interval rate\n", nRefreshRate);
-	} else {
-		nRefreshRate = 0;
-	}
+
 }
+

@@ -28,6 +28,10 @@
 #include "piglit-util-gl-common.h"
 #include "piglit-glx-util.h"
 
+#ifdef PIGLIT_USE_XRANDR
+#include <X11/extensions/Xrandr.h>
+#endif
+
 #ifndef GLXBadProfileARB
 #define GLXBadProfileARB 13
 #endif
@@ -497,3 +501,37 @@ piglit_framework_fbo_init_glx()
 {
 
 }
+
+int piglit_get_glx_refreshrate(Display *dpy)
+{
+	int rate = 0;
+#ifdef PIGLIT_USE_XRANDR
+	int xRandrMajor, xRandrMinor;
+	int xRandrError, xRandrEvent;
+    short xRandrRate;
+	int screen = DefaultScreen(dpy);
+	Window root_win = RootWindow(dpy, screen);
+    XRRScreenConfiguration *ScreenConfig;
+	/* Test to see if Xrandr is supported */
+	if(!XRRQueryExtension (dpy, &xRandrError, &xRandrEvent)) {
+		printf("Unable to query Xrandr\n");
+		return rate;
+	}
+	if(!XRRQueryVersion (dpy, &xRandrMajor, &xRandrMinor)) {
+		printf("Unable to query Xrandr version\n");
+		return rate;
+	}
+	
+	ScreenConfig = XRRGetScreenInfo (dpy, root_win);
+	if (ScreenConfig !=NULL) {
+		xRandrRate = XRRConfigCurrentRate (ScreenConfig);
+		rate = xRandrRate;
+		printf("Xrandr Refresh rate %d\n", rate);
+		XRRFreeScreenConfigInfo(ScreenConfig);
+	} else {
+		printf("Unable to get Xrandr Screen info.\n");
+	}
+#endif
+	return rate;
+}
+

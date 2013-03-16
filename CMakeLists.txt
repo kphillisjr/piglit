@@ -239,6 +239,16 @@ endif()
 find_library(OPENGL_gles1_LIBRARY NAMES GLESv1_CM)
 find_library(OPENGL_gles2_LIBRARY NAMES GLESv2)
 
+if(PIGLIT_HAS_X11)
+	# Allow Use of the Xrandr Extension
+	pkg_check_modules(XRANDR xrandr>=1.2)
+	if(XRANDR_FOUND)
+		add_definitions(-DPIGLIT_USE_XRANDR)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${XRANDR_CFLAGS}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${XRANDR_CFLAGS}")
+    endif(XRANDR_FOUND)
+endif(PIGLIT_HAS_X11)
+
 # Put all executables into the bin subdirectory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${piglit_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${piglit_BINARY_DIR}/lib)
@@ -260,6 +270,7 @@ check_include_file(sys/resource.h  HAVE_SYS_RESOURCE_H)
 check_include_file(sys/stat.h  HAVE_SYS_STAT_H)
 check_include_file(unistd.h    HAVE_UNISTD_H)
 check_include_file(fcntl.h     HAVE_FCNTL_H)
+
 
 configure_file(
 	"${piglit_SOURCE_DIR}/tests/util/config.h.in"

@@ -32,6 +32,7 @@
 #include "GL/glxproto.h"
 
 Display *piglit_get_glx_display();
+int piglit_get_glx_refreshrate(Display *dpy);
 XVisualInfo * piglit_get_glx_visual(Display *dpy);
 GLXContext piglit_get_glx_context(Display *dpy, XVisualInfo *visinfo);
 GLXContext piglit_get_glx_context_share(Display *dpy, XVisualInfo *visinfo, GLXContext share);

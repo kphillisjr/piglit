@@ -51,10 +51,17 @@ set(UTIL_GL_LIBS
 	)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+	if(XRANDR_FOUND)
+		set(UTIL_GL_LIBS
+				${UTIL_GL_LIBS}
+				${XRANDR_LDFLAGS}
+			)
+	endif(XRANDR_FOUND)
 	set(UTIL_GL_LIBS
 		${UTIL_GL_LIBS}
 		${X11_X11_LIB}
 	)
+	
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 if(OPENGL_egl_LIBRARY)
