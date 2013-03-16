@@ -36,17 +36,20 @@
 
 int piglit_width = 150, piglit_height = 150;
 
+unsigned int startVblank = 0;
 unsigned int prevVblank = 0;
 unsigned int currVblank = 0;
 unsigned int nextVblank = 0;
 unsigned int expVblank = 0; // Expected vblank
 int vBlankErrors = 0;
-bool RenderFrame(Display *dpy,bool clearFrame, bool renderTri, bool swapbuffer)
+
+bool RenderFrame(Display *dpy,bool clearFrame, bool renderTri)
 {
 	bool pass = true;
 	/* From Spec: glXWaitVideoSyncSGI returns the current video
 		sync counter value in <count>. 
 	*/
+	prevVblank = currVblank;
 	nextVblank = currVblank + 1;
 	glXWaitVideoSyncSGI(2, nextVblank%2,&currVblank);
 	glXGetVideoSyncSGI(&expVblank);
@@ -57,12 +60,7 @@ bool RenderFrame(Display *dpy,bool clearFrame, bool renderTri, bool swapbuffer)
 		pass = false;
 	}
 	if(1 < currVblank - prevVblank) {
-		if(vBlankErrors < 5) {
-			/* Only print first 5 vBlankErrors */
-			printf("glXGetVideoSyncSGI: Current vblank: 0x%08X.\n\t"
-				" Previous vblank:0x%08X\n", currVblank, prevVblank);
-		}
-		vBlankErrors++;
+		// The expected difference should be 1 vblank
 		pass = false;
 	}
 	if(clearFrame) 
@@ -77,67 +75,70 @@ bool RenderFrame(Display *dpy,bool clearFrame, bool renderTri, bool swapbuffer)
 			glVertex3f( 0.5f,-0.5f, 0.0f);              // Bottom Right
 		glEnd();                            // Finished Drawing The Triangle
 	}
-	if(clearFrame || renderTri ||swapbuffer)
-		glXSwapBuffers( dpy, win ); 
-	prevVblank = currVblank;
+	glFinish();
+	glXSwapBuffers( dpy, win ); 
 	return pass;
 }
-#define TESTFRAMECOUNT 60
+
 enum piglit_result
 draw(Display *dpy)
 {
-	int i = 0;
-	int errors = 0;
+	unsigned int i = 0;
+	unsigned int passes = 60;
+	unsigned int errors = 0;
 	enum piglit_result result = PIGLIT_PASS;
 	bool pass = true;
 #define report_error_fail(test_result, text) \
 	piglit_report_subtest_result(test_result,text);\
 	piglit_merge_result(&result,test_result);
-
+	if(0 < nRefreshRate) {
+		// Render for 5 seconds.
+		passes	= nRefreshRate * 5;
+	} 
 	/* Test With Clearing Frame */
-	glXGetVideoSyncSGI(&currVblank);
-	prevVblank = currVblank;
-	nextVblank = currVblank + 1;
-	for(i = 0; i < TESTFRAMECOUNT; i++){
-		if(!RenderFrame(dpy,true, false,false))
+	glXGetVideoSyncSGI(&startVblank);
+	currVblank = startVblank;
+	for(i = 0; i < passes; i++){
+		if(!RenderFrame(dpy,true, false))
 			pass = false;
 	}
-	if(vBlankErrors != 0)
-	{
-		printf("Error count greater than 3. Had %d errors.\n", vBlankErrors);
+	glXGetVideoSyncSGI(&currVblank);
+	if((currVblank - startVblank) != passes){
+		pass = false;
+		printf("Error: Test ran longer than expected, took %d vblanks, expected %d\n", currVblank - startVblank, passes);
 	}
 	report_error_fail( pass ? PIGLIT_PASS : PIGLIT_FAIL,"glXGetVideoSyncSGI: Clear frame");
 
 	// Reset State.
 	pass = true;
 	vBlankErrors = 0;
-	
-	/* Test Null Render where only swapping buffers Occurs */
-	glXGetVideoSyncSGI(&currVblank);
-	prevVblank = currVblank;
-	for(i = 0; i < TESTFRAMECOUNT; i++){
-		if(!RenderFrame(dpy,false, false, false))
+	startVblank = currVblank;
+	for(i = 0; i < passes; i++){
+		if(!RenderFrame(dpy,false, false))
 			pass = false;
 	}
-	if(vBlankErrors != 0)
-	{
-		printf("Expected no Sync errors, instead had %d Sync errors.\n", 
-			vBlankErrors);
+	glXGetVideoSyncSGI(&currVblank);
+	if((currVblank - startVblank) != passes){
+		pass = false;
+		printf("Error: Test ran longer than expected, took %d vblanks, expected %d\n", currVblank - startVblank, passes);
 	}
 	report_error_fail( pass ? PIGLIT_PASS : PIGLIT_FAIL,
-		"glXGetVideoSyncSGI: Null Render");
+		"glXGetVideoSyncSGI: Swap Buffers");
 
 	/* Test Null Render where only swapping buffers Occurs */
-	glXGetVideoSyncSGI(&currVblank);
-	prevVblank = currVblank;
-	for(i = 0; i < TESTFRAMECOUNT; i++){
-		if(!RenderFrame(dpy,false, false, true))
+	// Reset State.
+	pass = true;
+	vBlankErrors = 0;
+	startVblank = currVblank;
+	
+	for(i = 0; i < passes; i++){
+		if(!RenderFrame(dpy,true, false))
 			pass = false;
 	}
-	if(vBlankErrors != 0)
-	{
-		printf("Expected no Sync errors, instead had %d Sync errors.\n", 
-			vBlankErrors);
+	glXGetVideoSyncSGI(&currVblank);
+	if((currVblank - startVblank) != passes){
+		pass = false;
+		printf("Error: Test ran longer than expected, took %d vblanks, expected %d\n", currVblank - startVblank, passes);
 	}
 	report_error_fail( pass ? PIGLIT_PASS : PIGLIT_FAIL,
 		"glXGetVideoSyncSGI: Null Render w/ buffer swap");
@@ -145,51 +146,37 @@ draw(Display *dpy)
 	// Reset State.
 	pass = true;
 	vBlankErrors = 0;
-	
-	/* When Rendering A single triangle the vertical sync should 
-	   be flawless for 60 seconds */
-	glXGetVideoSyncSGI(&currVblank);
-	prevVblank = currVblank;
-	for(i = 0; i < TESTFRAMECOUNT; i++){
-		if(!RenderFrame(dpy,false, true, false))
+	startVblank = currVblank;
+
+	for(i = 0; i < passes; i++){
+		if(!RenderFrame(dpy,true, false))
 			pass = false;
 	}
-
-	if(vBlankErrors != 0)
+	glXGetVideoSyncSGI(&currVblank);
+	if((currVblank - startVblank) != passes)
 	{
-		printf("Expected no Sync errors, instead had %d Sync errors.\n", 
-			vBlankErrors);
-		vBlankErrors = 0;
+		pass = false;
+		printf("Error: Test ran longer than expected, took %d vblanks, expected %d\n", currVblank - startVblank, passes);
 	}
 	report_error_fail( pass ? PIGLIT_PASS : PIGLIT_FAIL,
 		"glXGetVideoSyncSGI: Render tri without clearing frame.");
 	// Reset State.
 	pass = true;
-	vBlankErrors = 0;	
-	/* When Rendering A single triangle the vertical sync should 
-	   be flawless for 60 seconds */
-	glXGetVideoSyncSGI(&currVblank);
-	prevVblank = currVblank;
-	for(i = 0; i < TESTFRAMECOUNT; i++){
-		if(!RenderFrame(dpy,true, true, false))
+	vBlankErrors = 0;
+	startVblank = currVblank;
+
+	for(i = 0; i < passes; i++){
+		if(!RenderFrame(dpy,true, false))
 			pass = false;
 	}
 
-	if(vBlankErrors != 0)
-	{
-		printf("Expected no Sync errors, instead had %d Sync errors.\n", 
-			vBlankErrors);
+	if((currVblank - startVblank) != passes){
+		pass = false;
+		printf("Error: Test ran longer than expected, took %d vblanks, expected %d\n", currVblank - startVblank, passes);
 	}
 	report_error_fail( pass ? PIGLIT_PASS : PIGLIT_FAIL,
 		"glXGetVideoSyncSGI: Render tri with Clearing frame");
 
-	// Reset State.
-	pass = true;
-	vBlankErrors = 0;
-	
-	// Reset State.
-	pass = true;
-	vBlankErrors = 0;
 	piglit_report_result(result);
 	exit(1);	
 }
