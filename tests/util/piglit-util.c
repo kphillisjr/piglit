@@ -170,6 +170,7 @@ piglit_result_to_string(enum piglit_result result)
         case PIGLIT_SKIP: return "skip";
         case PIGLIT_WARN: return "warn";
         case PIGLIT_PASS: return "pass";
+        case PIGLIT_CRASH: return "crash";
         }
         return "Unknown result";
 }
@@ -185,6 +186,7 @@ piglit_report_result(enum piglit_result result)
 	fflush(stdout);
 
 	switch(result) {
+	case PIGLIT_CRASH:
 	case PIGLIT_PASS:
 	case PIGLIT_SKIP:
 	case PIGLIT_WARN:
@@ -275,6 +277,9 @@ void
 piglit_merge_result(enum piglit_result *all, enum piglit_result subtest)
 {
 	switch (subtest) {
+	case PIGLIT_CRASH:
+		*all = PIGLIT_CRASH;
+		break;
 	case PIGLIT_FAIL:
 		*all = PIGLIT_FAIL;
 		break;

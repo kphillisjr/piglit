@@ -100,7 +100,8 @@ enum piglit_result {
 	PIGLIT_PASS,
 	PIGLIT_FAIL,
 	PIGLIT_SKIP,
-	PIGLIT_WARN
+	PIGLIT_WARN,
+	PIGLIT_CRASH
 };
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
