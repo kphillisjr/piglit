@@ -329,12 +329,21 @@ check_function_exists(strndup   HAVE_STRNDUP)
 check_function_exists(fopen_s   HAVE_FOPEN_S)
 check_function_exists(setrlimit HAVE_SETRLIMIT)
 
+check_include_file(execinfo.h  HAVE_EXECINFO_H)
+check_include_file(signal.h    HAVE_SIGNAL_H)
+check_include_file(syscall.h   HAVE_SYSCALL_H)
 check_include_file(sys/time.h  HAVE_SYS_TIME_H)
 check_include_file(sys/types.h HAVE_SYS_TYPES_H)
 check_include_file(sys/resource.h  HAVE_SYS_RESOURCE_H)
+check_include_file(sys/siginfo.h HAVE_SYS_SIGINFO_H)
 check_include_file(sys/stat.h  HAVE_SYS_STAT_H)
+check_include_file(sys/syscall.h HAVE_SYS_SYSCALL_H)
 check_include_file(unistd.h    HAVE_UNISTD_H)
+#TODO: Implement proper libunwind support.
+#check_include_file(unwind.h    HAVE_UNWIND_H)
+#check_include_file(libunwind.h HAVE_LIBUNWIND_H)
 check_include_file(fcntl.h     HAVE_FCNTL_H)
+check_include_file(wait.h	   HAVE_WAIT_H)
 
 configure_file(
 	"${piglit_SOURCE_DIR}/tests/util/config.h.in"

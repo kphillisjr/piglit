@@ -9,6 +9,15 @@ set(UTIL_SOURCES
 	piglit-util.c
 	)
 
+
+# Auto-detect Correct Signal Handler.
+if(UNIX)
+	list(APPEND UTIL_SOURCES piglit-sighandler/piglit-sighandler-posix.c)
+else()
+	# No Signal Handler found.
+	list(APPEND UTIL_SOURCES piglit-sighandler/piglit-sighandler-none.c)
+endif()
+
 set(UTIL_GL_INCLUDES
 	${UTIL_INCLUDES}
 	${GLEXT_INCLUDE_DIR}
