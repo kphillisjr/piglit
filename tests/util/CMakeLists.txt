@@ -11,7 +11,9 @@ set(UTIL_SOURCES
 
 
 # Auto-detect Correct Signal Handler.
-if(UNIX)
+if(WIN32)
+	list(APPEND UTIL_SOURCES piglit-sighandler/piglit-sighandler-win32.cpp)
+elseif(UNIX)
 	list(APPEND UTIL_SOURCES piglit-sighandler/piglit-sighandler-posix.c)
 else()
 	# No Signal Handler found.

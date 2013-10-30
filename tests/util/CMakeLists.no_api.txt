@@ -10,4 +10,8 @@ if(UNIX)
 	target_link_libraries(piglitutil m)
 endif(UNIX)
 
+if(WIN32)
+    target_link_libraries(piglitutil Dbghelp)
+endif(WIN32)
+
 # vim: ft=cmake:
