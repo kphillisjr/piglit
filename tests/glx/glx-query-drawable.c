@@ -266,6 +266,8 @@ parse_args(int argc, char **argv,
 		}
 	}
 
+	piglit_register_signal_handler();
+
 	if (*test_func == query_preserved_contents)
 	    if (drawable_type != GLXPBUFFER)
 		usage_error();

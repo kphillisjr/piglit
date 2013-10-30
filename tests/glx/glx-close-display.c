@@ -80,6 +80,9 @@ isDirectRendering(void)
 int
 main(int argc, char **argv)
 {
+
+	piglit_register_signal_handler();
+
 	isDirectRendering();
 
 	/* Run a second to exercise reloading the *_dri.so driver. */

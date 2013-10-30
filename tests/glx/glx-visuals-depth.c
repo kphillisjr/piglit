@@ -101,6 +101,8 @@ main(int argc, char **argv)
 {
 	enum piglit_result result;
 
+	piglit_register_signal_handler();
+
 	if (argc > 1 && strcmp(argv[1], "-pixmap") == 0)
 		result = piglit_glx_iterate_pixmap_fbconfigs(draw);
 	else

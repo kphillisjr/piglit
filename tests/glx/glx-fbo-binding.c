@@ -88,6 +88,8 @@ main(int argc, char **argv)
    XVisualInfo *visinfo;
    int i;
 
+	piglit_register_signal_handler();
+
    for (i = 1; i < argc; i++) {
       if (strcmp(argv[i], "-auto") == 0) {
          piglit_automatic = 1;

@@ -120,6 +120,8 @@ main(int argc, char **argv)
 			fprintf(stderr, "Unknown option: %s\n", argv[i]);
 	}
 
+	piglit_register_signal_handler();
+
 	XInitThreads();
 	dpy = XOpenDisplay(NULL);
 	if (dpy == NULL) {

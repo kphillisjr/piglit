@@ -65,6 +65,8 @@ main(int argc, char **argv)
 	GLXPixmap g;
 	pfn_create_pixmap create_pixmap_with_config = NULL;
 
+	piglit_register_signal_handler();
+
 	dpy = XOpenDisplay(NULL);
 	if (dpy == NULL) {
 		fprintf(stderr, "couldn't open display\n");

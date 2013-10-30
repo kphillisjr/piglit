@@ -99,6 +99,8 @@ main(int argc, char **argv)
 	int ret;
 	pthread_t thread1, thread2;
 
+	piglit_register_signal_handler();
+
 	XInitThreads();
 
 	pthread_mutex_init(&mutex, NULL);
