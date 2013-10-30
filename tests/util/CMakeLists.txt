@@ -50,11 +50,17 @@ if(PIGLIT_USE_WAFFLE)
 			piglit-framework-gl/piglit_x11_framework.c
 		)
 	endif()
+elseif(PIGLIT_USE_GLFW3)
+	list(APPEND UTIL_GL_SOURCES
+		piglit-framework-gl/piglit_glfw_framework.c
+	)
 else()
 	list(APPEND UTIL_GL_SOURCES
 		piglit-framework-gl/piglit_glut_framework.c
 	)
 endif()
+
+
 
 set(UTIL_GL_LIBS
 	piglitutil
@@ -105,6 +111,10 @@ if(EGL_FOUND)
 		${UTIL_GL_LIBS}
 		${EGL_LDFLAGS}
 	)
+endif()
+
+if(PIGLIT_USE_GLFW3)
+	list(APPEND UTIL_GL_LIBS ${GLFW3_LIBRARIES})
 endif()
 
 piglit_include_target_api()

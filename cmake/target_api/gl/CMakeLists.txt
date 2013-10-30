@@ -3,7 +3,7 @@ add_definitions(
 	-DPIGLIT_USE_OPENGL
 	)
 
-if(NOT PIGLIT_USE_WAFFLE)
+if(NOT( PIGLIT_USE_GLFW3 OR PIGLIT_USE_WAFFLE))
 	add_definitions(-DPIGLIT_USE_GLUT)
 	include_directories(
 		${GLUT_INCLUDE_DIR}

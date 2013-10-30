@@ -37,6 +37,9 @@
 #ifdef HAVE_LIBDRM
 #	include "piglit_drm_dma_buf.h"
 #endif
+#if PIGLIT_USE_GLFW3
+#	include "piglit_glfw_framework.h"
+#endif
 
 struct piglit_gl_framework*
 piglit_gl_framework_factory(const struct piglit_gl_test_config *test_config)
@@ -54,6 +57,8 @@ piglit_gl_framework_factory(const struct piglit_gl_test_config *test_config)
 	}
 
 	return gl_fw;
+#elif PIGLIT_USE_GLFW3
+	return piglit_glfw_framework_create(test_config);
 #else
 	return piglit_glut_framework_create(test_config);
 #endif

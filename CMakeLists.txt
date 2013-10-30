@@ -28,8 +28,10 @@ endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	option(PIGLIT_USE_WAFFLE "Use Waffle in place of GLUT" ON)
+	option(PIGLIT_USE_GLFW3 "Use GLFW in place of GLUT" ON)
 else()
 	option(PIGLIT_USE_WAFFLE "Use Waffle in place of GLUT" OFF)
+	option(PIGLIT_USE_GLFW3 "Use GLFW in place of GLUT" ON)
 endif()
 
 if(PIGLIT_USE_WAFFLE)
@@ -46,6 +48,17 @@ if(PIGLIT_USE_WAFFLE)
 	add_definitions(-DPIGLIT_HAS_WAYLAND)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WAFFLE_CFLAGS}")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WAFFLE_CFLAGS}")
+elseif(PIGLIT_USE_GLFW3)
+	pkg_search_module(GLFW3 glfw3)
+	if(GLFW3_FOUND)
+		include_directories(${GLFW3_INCLUDE_DIRS})
+	else()
+		message(FATAL_ERROR "Failed to find GLFW version 3.\n"
+			"If GLFW3 is not installed, You can download GLFW3 from "
+			"their website at http://www.glfw.org/"
+		)
+	endif()
+	add_definitions(-DPIGLIT_USE_GLFW3)
 else()
 	find_package(GLUT REQUIRED)
 
