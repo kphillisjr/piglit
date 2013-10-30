@@ -28,6 +28,8 @@
 #include <assert.h>
 #include <stdbool.h>
 
+#include "piglit-util.h"
+
 /**
  * A bitmask of these enums specifies visual attributes for the test's window.
  *
@@ -267,6 +269,14 @@ piglit_gl_test_run(int argc, char *argv[],
         main(int argc, char *argv[])                                         \
         {                                                                    \
                 struct piglit_gl_test_config config;                         \
+                                                                             \
+                /* Register Signal Handler to assist with automatically */   \
+                /* capturing call stack when crash occurs. This is to */     \
+                /* improve the distributed testing. */                       \
+                /* Note: This is important for windows XP or newer since*/   \
+                /* there is dialogs that appear that get in the way of */    \
+                /* the Automated Testing */                                 \
+                piglit_register_signal_handler();                            \
                                                                              \
                 piglit_gl_test_config_init(&config);                         \
                                                                              \
