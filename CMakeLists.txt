@@ -26,32 +26,29 @@ else()
 	find_package(OpenGL)
 endif()
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-	option(PIGLIT_USE_WAFFLE "Use Waffle in place of GLUT" ON)
-	option(PIGLIT_USE_GLFW3 "Use GLFW in place of GLUT" ON)
-else()
-	option(PIGLIT_USE_WAFFLE "Use Waffle in place of GLUT" OFF)
-	option(PIGLIT_USE_GLFW3 "Use GLFW in place of GLUT" ON)
-endif()
+option(PIGLIT_USE_WAFFLE "Use Waffle in place of GLUT" ON)
+option(PIGLIT_USE_GLFW3 "Use GLFW in place of GLUT" ON)
 
 if(PIGLIT_USE_WAFFLE)
 	pkg_check_modules(WAFFLE REQUIRED waffle-1>=1.2.2)
+	if(WAFFLE_FOUND)
+		add_definitions(-DPIGLIT_USE_WAFFLE)
+		add_definitions(-DPIGLIT_HAS_WAYLAND)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WAFFLE_CFLAGS}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WAFFLE_CFLAGS}")
+		set(PIGLIT_USE_GLFW3 OFF CACHE BOOL "" FORCE)
+	else()
+		set(PIGLIT_USE_WAFFLE OFF CACHE BOOL "" FORCE)
+	endif()
 
-	if(NOT WAFFLE_FOUND)
-		message(FATAL_ERROR "Failed to find Waffle. If Waffle is not "
-		"packaged for your distribution, you can get it at "
-		"http://people.freedesktop.org/~chadversary/waffle."
-	)
-        endif()
 
-	add_definitions(-DPIGLIT_USE_WAFFLE)
-	add_definitions(-DPIGLIT_HAS_WAYLAND)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WAFFLE_CFLAGS}")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WAFFLE_CFLAGS}")
-elseif(PIGLIT_USE_GLFW3)
+endif(PIGLIT_USE_WAFFLE)
+
+if(PIGLIT_USE_GLFW3 AND( NOT PIGLIT_USE_WAFFLE))
 	pkg_search_module(GLFW3 glfw3)
 	if(GLFW3_FOUND)
 		include_directories(${GLFW3_INCLUDE_DIRS})
+		add_definitions(-DPIGLIT_USE_GLFW3)
 	else()
 		if(EXISTS "${CMAKE_SOURCE_DIR}/glfw/CMakeLists.txt")
 			set(GLFW_BUILD_EXAMPLES OFF CACHE STRING "" FORCE)
@@ -86,15 +83,15 @@ elseif(PIGLIT_USE_GLFW3)
                         RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin"
                         )
 			endif(WIN32)
+			add_definitions(-DPIGLIT_USE_GLFW3)
 		else()
-			message(FATAL_ERROR "Failed to find GLFW version 3.\n"
-				"If GLFW3 is not installed, You can download GLFW3 from "
-				"their website at http://www.glfw.org/"
-			)
+			# GLFW3 not found.
+			set(PIGLIT_USE_GLFW3 OFF CACHE BOOL "" FORCE)
 		endif()
 	endif()
-	add_definitions(-DPIGLIT_USE_GLFW3)
-else()
+endif(PIGLIT_USE_GLFW3 AND( NOT PIGLIT_USE_WAFFLE))
+
+if(NOT (PIGLIT_USE_GLFW3 OR PIGLIT_USE_WAFFLE))
 	find_package(GLUT REQUIRED)
 
 	# The 'REQUIRED' above correctly produces an error for
@@ -108,9 +105,12 @@ else()
 	#
 	# Work around the bug and error out quickly here instead.
 	if (NOT GLUT_FOUND)
-		message(FATAL_ERROR "GLUT library not found")
+		 message(FATAL_ERROR 
+		 	"Unable to find a suitable framework to use."
+		 	"Please Install GLUT, GLFW, or Waffle."
+		 	)
 	endif()
-endif(PIGLIT_USE_WAFFLE)
+endif(NOT (PIGLIT_USE_GLFW3 OR PIGLIT_USE_WAFFLE))
 
 if(PIGLIT_BUILD_GLES1_TESTS AND NOT PIGLIT_USE_WAFFLE)
 	message(FATAL_ERROR "Option PIGLIT_BUILD_GLES1_TESTS requires PIGLIT_USE_WAFFLE")
