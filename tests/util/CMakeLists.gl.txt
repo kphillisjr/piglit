@@ -53,4 +53,8 @@ piglit_add_library (piglitutil_${piglit_target_api}
 	${UTIL_GL_SOURCES}
 )
 
+target_link_libraries(piglitutil_${piglit_target_api}
+	piglitutil
+)
+
 # vim: ft=cmake:
