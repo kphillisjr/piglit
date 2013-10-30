@@ -56,5 +56,7 @@ piglit_add_library (piglitutil_${piglit_target_api}
 target_link_libraries(piglitutil_${piglit_target_api}
 	piglitutil
 )
-
+if(PIGLIT_USE_INTERNAL_GLFW3)
+    add_dependencies(piglitutil_${piglit_target_api} glfw)
+endif(PIGLIT_USE_INTERNAL_GLFW3)
 # vim: ft=cmake:

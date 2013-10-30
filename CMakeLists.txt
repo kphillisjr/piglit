@@ -53,10 +53,45 @@ elseif(PIGLIT_USE_GLFW3)
 	if(GLFW3_FOUND)
 		include_directories(${GLFW3_INCLUDE_DIRS})
 	else()
-		message(FATAL_ERROR "Failed to find GLFW version 3.\n"
-			"If GLFW3 is not installed, You can download GLFW3 from "
-			"their website at http://www.glfw.org/"
-		)
+		if(EXISTS "${CMAKE_SOURCE_DIR}/glfw/CMakeLists.txt")
+			set(GLFW_BUILD_EXAMPLES OFF CACHE STRING "" FORCE)
+			set(GLFW_BUILD_TESTS OFF CACHE STRING "" FORCE)
+			if(NOT WIN32)
+				set(GLFW_INSTALL OFF CACHE STRING "" FORCE)
+				if ( NOT MSVC)
+					set(BUILD_SHARED_LIBS ON CACHE STRING "" FORCE)
+				else()
+					set(BUILD_SHARED_LIBS ON CACHE STRING "" FORCE)
+				endif()
+			endif(NOT WIN32)
+            if(MSVC)
+                set(GLFW_INSTALL OFF CACHE STRING "" FORCE)
+                set(BUILD_SHARED_LIBS ON CACHE STRING "" FORCE)
+            endif()
+			set(GLFW_VERSION_EXTRA "piglit" CACHE STRING "" FORCE)
+			add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/glfw)
+			include_directories(${CMAKE_CURRENT_SOURCE_DIR}/glfw/include)
+			set(GLFW_LIBRARY ${GLFW_LIBRARIES})
+			# tell the rest of the Scripts to rely on internal GLFW3.
+			set(PIGLIT_USE_INTERNAL_GLFW3 ON)
+			set(GLFW3_LIBRARIES glfw ${GLFW_LIBRARIES})
+			if(WIN32)
+                set_target_properties(glfw
+                    PROPERTIES
+                        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+                        LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin"
+                        LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/bin"
+                        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+                        RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/bin"
+                        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin"
+                        )
+			endif(WIN32)
+		else()
+			message(FATAL_ERROR "Failed to find GLFW version 3.\n"
+				"If GLFW3 is not installed, You can download GLFW3 from "
+				"their website at http://www.glfw.org/"
+			)
+		endif()
 	endif()
 	add_definitions(-DPIGLIT_USE_GLFW3)
 else()
@@ -434,6 +469,13 @@ endif ()
 # See http://www.vtk.org/Wiki/CMake:CPackPackageGenerators
 if (WIN32)
 	set (CPACK_GENERATOR "ZIP")
+    # Install all DLL Files that are placed into the bin folder.
+     install (
+        DIRECTORY ${CMAKE_BINARY_DIR}/bin
+        DESTINATION .
+        FILES_MATCHING REGEX ".*\\.(dll)$"
+        REGEX "CMakeFiles|CMakeLists" EXCLUDE
+    )
 else ()
 	set (CPACK_GENERATOR "TBZ2")
 endif ()
