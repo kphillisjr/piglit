@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8.6)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
@@ -12,7 +12,8 @@ INCLUDE (FindPkgConfig)
 project (piglit)
 
 find_package(X11)
-
+#Find Python 2.6 interpreter.
+find_package(PythonInterp 2.6 REQUIRED)
 
 option(PIGLIT_BUILD_GL_TESTS "Build tests for OpenGL" ON)
 option(PIGLIT_BUILD_GLES1_TESTS "Build tests for OpenGL ES1" OFF)
@@ -182,22 +183,11 @@ IF(PIGLIT_BUILD_GLX_TESTS)
 	pkg_check_modules(GLPROTO REQUIRED glproto)
 ENDIF()
 
-# Check for presence of Python 2.6 or greater.
-foreach(python_cmd python2 python)
-	execute_process(
-		COMMAND ${python_cmd} -c "import sys; assert '2.6' <= sys.version < '3'"
-		OUTPUT_QUIET
-		ERROR_QUIET
-		RESULT_VARIABLE python_version_check_error_code)
-	if(python_version_check_error_code EQUAL 0)
-		set(python ${python_cmd})
-		break()
-	endif(python_version_check_error_code EQUAL 0)
-endforeach(python_cmd)
-
-if(NOT DEFINED python)
+if(NOT PYTHONINTERP_FOUND)
 	message(FATAL_ERROR "python version 2.x (where x >= 6) required")
-endif(NOT DEFINED python)
+endif(NOT PYTHONINTERP_FOUND)
+
+set(python ${PYTHON_EXECUTABLE})
 
 # Check for the presence of several python packages, which are needed to build
 # generated tests.
@@ -209,6 +199,9 @@ execute_process(
 if(NOT import_numpy_error_code EQUAL 0)
 	message(FATAL_ERROR "numpy python module not found")
 endif(NOT import_numpy_error_code EQUAL 0)
+
+# Check for the presence of python packages, which are needed to build
+# html results output.
 execute_process(
 	COMMAND ${python} -c "from mako.template import Template"
 	OUTPUT_QUIET
@@ -217,6 +210,18 @@ execute_process(
 if(NOT import_mako_error_code EQUAL 0)
 	message(FATAL_ERROR "mako.template python module not found")
 endif(NOT import_mako_error_code EQUAL 0)
+
+# Check for argparse feature. This is added in Python 2.7 and with some work
+# can be found in python 2.6 also.
+execute_process(
+	COMMAND ${python} -c "import argparse"
+	OUTPUT_QUIET
+	ERROR_QUIET
+	RESULT_VARIABLE import_argparse_error_code)
+if(NOT import_argparse_error_code EQUAL 0)
+	message(FATAL_ERROR
+		"argparse python module not found, Please Update python.")
+endif(NOT import_argparse_error_code EQUAL 0)
 
 # Default to compiling with debug information (`gcc -g`):
 if(NOT CMAKE_BUILD_TYPE)
