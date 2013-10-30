@@ -199,6 +199,8 @@ main(int argc, char *argv[])
 
 	parse_args(argv, &argc, &test_func);
 
+	piglit_register_signal_handler();
+
 	egl_init_test(&test);
 	test.draw = test_func;
 	test.window_width = window_width;

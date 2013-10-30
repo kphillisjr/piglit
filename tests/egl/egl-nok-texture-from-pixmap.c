@@ -105,6 +105,8 @@ main(int argc, char *argv[])
 {
 	struct egl_test test;
 
+	piglit_register_signal_handler();
+
 	egl_init_test(&test);
 	test.extensions = extensions;
 	test.draw = draw;
