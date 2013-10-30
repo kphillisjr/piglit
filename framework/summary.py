@@ -254,7 +254,8 @@ class Summary:
         self.fractions = {}
         self.totals = {}
         self.tests = {'all': set(), 'changes': set(), 'problems': set(),
-                      'skipped': set(), 'regressions': set(), 'fixes': set()}
+                      'skipped': set(), 'regressions': set(), 'fixes': set(),
+                      'crashes': set()}
 
         def fgh(test, result):
             """ Helper for updating the fractions and status lists """
@@ -309,6 +310,13 @@ class Summary:
             # Find all tests with a status of skip
             if so.Skip() in status:
                 self.tests['skipped'].add(test)
+            # Find all tests with a status of crash
+            if so.Crash() in status:
+                self.tests['crashes'].add(test)
+
+            # Find all tests with a status of crash
+            if so.Crash() in status:
+                self.tests['crashes'].add(test)
 
             # find fixes, regressions, and changes
             for i in xrange(len(status) - 1):
@@ -407,7 +415,8 @@ class Summary:
                                 output_encoding="utf-8",
                                 module_directory=".makotmp")
 
-        pages = ('changes', 'problems', 'skipped', 'fixes', 'regressions')
+        pages = ('changes', 'problems', 'skipped', 'fixes', 'regressions',
+                 'crashes')
 
         # Index.html is a bit of a special case since there is index, all, and
         # alltests, where the other pages all use the same name. ie,
