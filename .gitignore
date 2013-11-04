@@ -4,9 +4,11 @@
 *.zip
 *~
 
+
 /.ninja_log
 /build.ninja
 /rules.ninja
+/install_manifest.txt
 .ninja_deps
 
 _CPack_Packages
@@ -19,6 +21,7 @@ CPackSourceConfig.cmake
 Makefile
 cmake_install.cmake
 CMakeCache.txt
+
 target_api
 tests/glslparsertest/glslcompiler
 generated_tests/cl
