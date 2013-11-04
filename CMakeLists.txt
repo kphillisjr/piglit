@@ -441,6 +441,12 @@ install (
 )
 
 install (
+	DIRECTORY templates
+	DESTINATION .
+	FILES_MATCHING REGEX ".*\\.(css|mako)$"
+)
+
+install (
 	DIRECTORY tests
 	DESTINATION .
 	FILES_MATCHING REGEX ".*\\.(tests|program_test|shader_test|frag|vert|geom|ktx|cl|txt)$"
